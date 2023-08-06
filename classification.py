@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn
-import xgboost
+from xgboost import XGBClassifier
 from sklearn import tree, metrics
 from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.linear_model import LogisticRegression
@@ -32,8 +32,8 @@ def missing_values(dataset):
 def class_distribution(dataset):
     numBenign = sum(dataset['diagnosis'] == 0)
     numMalignant = sum(dataset['diagnosis'] == 1)
+    print('Broj uzoraka sa benignim oboljenjem: ', numBenign)
     print('Broj uzoraka sa malignim oboljenjem: ', numMalignant)
-    print('Broj uzoraka sa belignim oboljenjem: ', numBenign)
     #prikaz raspodele klasa
     plt.bar(0, numBenign, color ='lightskyblue', width=0.5, label ='Benigna')
     plt.bar(1, numMalignant, color ='mediumaquamarine', width=0.5, label ='Maligna')
@@ -43,28 +43,31 @@ def class_distribution(dataset):
     plt.ylabel('Broj uzoraka')
     plt.title('Prikaz raspodele klasa', weight='bold')
     plt.legend()
+    plt.savefig('./images/class_distribution.png')
     plt.show()
 
-def show_correlations(mean, se, worst):
+def show_correlations(mean, se, worst, titles):
     data = [mean, se, worst]
     colors = ["lightskyblue", "mediumaquamarine", "peachpuff"]
-    titles = ["srednje vrednosti", "srednje-kvadratne greske", "najvece greske"]
     file_names = ["mean_correlation_map.png", "se_correlation_map.png", "worst_correlation_map.png"]
     for i in range (len(data)):
         correlation = data[i].drop(columns=['diagnosis']).corrwith(data[i].diagnosis)
         correlation.plot(kind='bar', grid=False, color=colors[i])
         plt.title("Korelacija atributa " + titles[i] + " sa dijagnozom", weight='bold')
-        plt.savefig(file_names[i])
+        plt.ylabel('Nivo korelisanosti')
+        plt.savefig("./images/" + file_names[i])
         plt.show()
 
-def show_color_map(dataset, mean, se, worst):
+def show_color_map(dataset, mean, se, worst, titles):
     data = [dataset, mean, se, worst]
     file_names = ["correlation.png", "mean_correlation.png", "se_correlation.png", "worst_correlation.png"]
+    titles.insert(0, "svih atributa")
     for i in range (len(data)):
         corr = data[i].corr()
         plt.figure(figsize = (20, 20))
         seaborn.heatmap(corr, cmap = 'coolwarm', annot = True)
-        plt.savefig(file_names[i])
+        plt.title("Kolormapa " + titles[i], weight='bold')
+        plt.savefig("./images/" + file_names[i])
         plt.show()
 
 def correlation(dataset):
@@ -73,10 +76,11 @@ def correlation(dataset):
     se = dataset.drop(dataset.columns[1:11], axis=1)
     se = se.drop(se.columns[11:], axis=1)
     worst = dataset.drop(dataset.columns[1:21], axis=1)
+    titles = ["srednje vrednosti", "srednje-kvadratne greske", "najvece greske"]
     #prikaz korelacija za dijagnozom
-    show_correlations(mean, se, worst)
+    show_correlations(mean, se, worst, titles)
     # prikaz korelacija sa dijagnozom kolor mapom
-    show_color_map(dataset, mean, se, worst)
+    show_color_map(dataset, mean, se, worst, titles)
 
     corr = dataset.corr()
     dataset = dataset[['diagnosis', 'radius_mean', 'area_mean',
@@ -93,10 +97,8 @@ def correlation(dataset):
     print('- Broj prediktora kojima je koeficijent korelacije veci od 0.5 = ', len(cc))
     print('--------------------------------------------------')
     print('- Prediktori najkorelisaniji sa izlazom: \n ', cc)
-
     print('Svi prediktori sa odgovarajucim koeficijentom korelacije sa izlazom: \n\n', corr['diagnosis'])
     print('Izdvojeni prediktori sa odgovarajucim koeficijentom korelacije sa izlazom: \n\n', new_corr['diagnosis'])
-
     #return dataset
 
 def positive_negative_hist(dataset):
@@ -110,7 +112,8 @@ def positive_negative_hist(dataset):
         seaborn.histplot(val1, ax=ax[index], color="peachpuff", label="100% Equities", kde=True, stat="density", linewidth=0)
         index += 1
     plt.tight_layout(pad=0.5, w_pad=0.7, h_pad=5.0)
-    plt.savefig('positive_negative_hist.png')
+    plt.savefig('./images/positive_negative_histogram.png')
+    plt.title("Prikaz pozitivnih i negativnih primeraka za sve atribute", weight="bold")
     plt.show()
 
 def final_atributes(dataset):
@@ -134,51 +137,68 @@ def divide_train_test(dataset):
     X_test = sc.transform(X_test)
     return X_train, X_test, y_train, y_test
 
-def plot_confusion_matrix(prediction_lr, y_test, name):
+def plot_confusion_matrix(prediction_lr, y_test, name, filename):
     confusion_matrix = metrics.confusion_matrix(y_test, prediction_lr)
     cm_display = ConfusionMatrixDisplay(confusion_matrix = confusion_matrix, display_labels = [False, True])
     cm_display.plot()
+    plt.savefig('./images/conf_mat_' + filename + '.png')
+    plt.title("Konfuziona matrica - " + name, weight="bold")
+    plt.xlabel("Predikcija")
+    plt.ylabel("Stvarna vrednost")
     plt.show()
     print('Tacnost modela ' + name + ' iznosi: {:.3f}%'.format(accuracy_score(y_test,prediction_lr)*100))
     print('Balansirana tacnost modela ' + name + ' iznosi: {:.3f}%'.format(f1_score(y_test,prediction_lr)*100))
 
-def classify(classifier, name, X_train, X_test, y_train, y_test):
+def classify(classifier, name, filename, X_train, X_test, y_train, y_test):
     classifier.fit(X_train, y_train)
     prediction = classifier.predict(X_test)
     print(classification_report(y_test, prediction, target_names = ['Maligna masa: 0','Benigna masa: 1']))
-    plot_confusion_matrix(prediction, y_test, name)
+    plot_confusion_matrix(prediction, y_test, name, filename)
 
 def decision_tree(X_train, X_test, y_train, y_test, dataset):
+    print("\n-----------------------\n")
+    print("Stablo odlucivanja:\n")
     classifier = DecisionTreeClassifier()
-    classify(classifier, "stabla odlucivanja", X_train, X_test, y_train, y_test) 
+    classify(classifier, "stabla odlucivanja", "td", X_train, X_test, y_train, y_test) 
     classifier.fit(X_train, y_train)
     #prikaz stabla
     feature_names =[l for l in list(dataset.columns)[1:]]
     class_names = ['Benign', 'Malignant']
     fig = plt.figure(figsize=(30, 20))
     _ = tree.plot_tree(classifier, feature_names = feature_names, class_names=class_names, filled=True, fontsize=8)
-    plt.savefig('tree.png')
+    plt.title("Prikaz stabla odlucivanja", weight="bold")
+    plt.savefig('./images/tree.png')
     plt.show() 
 
 def logistic_regression(X_train, X_test, y_train, y_test):
+    print("\n-----------------------\n")
+    print("Logisticka regresija:\n")
     classifier = LogisticRegression()
-    classify(classifier, "logisticke regresije", X_train, X_test, y_train, y_test)
+    classify(classifier, "logisticke regresije", "lr", X_train, X_test, y_train, y_test)
 
 def random_forest(X_train, X_test, y_train, y_test):
+    print("\n-----------------------\n")
+    print("Slucajna suma:\n")
     classifier = RandomForestClassifier()
-    classify(classifier, "slucajne sume", X_train, X_test, y_train, y_test)
+    classify(classifier, "slucajne sume", "rf", X_train, X_test, y_train, y_test)
 
 def XGBoost(X_train, X_test, y_train, y_test):
-    classifier = xgboost.XGBClassifier(n_estimators=350, subsample=0.8, max_depth=7, eval_metric = 'logloss', use_label_encoder = False)
-    classify(classifier, "XGBoost", X_train, X_test, y_train, y_test)
+    print("\n-----------------------\n")
+    print("XGBoost:\n")
+    classifier = XGBClassifier(n_estimators=350, subsample=0.8, max_depth=7, eval_metric = 'logloss')
+    classify(classifier, "XGBoost", "xgb", X_train, X_test, y_train, y_test)
 
 def AdaBoost(X_train, X_test, y_train, y_test):
+    print("\n-----------------------\n")
+    print("AdaBoost:\n")
     classifier = AdaBoostClassifier(n_estimators=50, learning_rate=1)
-    classify(classifier, "AdaBoost", X_train, X_test, y_train, y_test)
+    classify(classifier, "AdaBoost", "adb", X_train, X_test, y_train, y_test)
 
 def naive_bayes(X_train, X_test, y_train, y_test):
+    print("\n-----------------------\n")
+    print("Naivni Bajes:\n")
     classifier = GaussianNB()
-    classify(classifier, "Naivnog Bajesa", X_train, X_test, y_train, y_test)
+    classify(classifier, "Naivnog Bajesa", "nb", X_train, X_test, y_train, y_test)
 
 if __name__ == '__main__':
     #analiziranje klasa i atributa
@@ -193,7 +213,7 @@ if __name__ == '__main__':
 
     #podela skupa podataka
     X_train, X_test, y_train, y_test = divide_train_test(dataset)
-    
+
     #treniranje i klasifikacija razlicitim metodama
     decision_tree(X_train, X_test, y_train, y_test, dataset)
     logistic_regression(X_train, X_test, y_train, y_test)
