@@ -12,20 +12,28 @@ from sklearn.metrics import ConfusionMatrixDisplay, classification_report, accur
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
+def analyze_base():
+    dataset = load_data()
+    missing_values(dataset)
+    class_distribution(dataset)
+    correlation(dataset)
+    positive_negative_hist(dataset)
+    return dataset
+
 #ucitavanje baze
 def load_data():
     dataset = pd.read_csv('data.csv')
+    print('Velicina baze: ', dataset.shape)
     #izbacivanje kolona koje nisu od znacaja (kolona 'id' i kolona 'Unnamed: 32')
     dataset = dataset.drop(columns=['id', 'Unnamed: 32'])
     dataset['diagnosis'] = dataset['diagnosis'].replace('B', 0).replace('M', 1)
-    print('Velicina baze: ', dataset.shape)
-    print('Prikaz poslednjih 10 redova baze:\n', dataset.tail(10))
+    print('\n\nPrikaz poslednjih 10 redova baze:\n\n', dataset.tail(10))
     return dataset
 
 #provera da li ima nedostajucih vrednosti
 def missing_values(dataset):
     missing_values_per_column = dataset.isna().sum()
-    print("\nNedostajuce vrednosti po kolonama:\n", missing_values_per_column)
+    print("\nNedostajuce vrednosti po kolonama:\n\n", missing_values_per_column)
     missing_values = missing_values_per_column.sum()
     print("\nBroj nedostajucih vrednosti:", missing_values)
 
@@ -34,6 +42,7 @@ def class_distribution(dataset):
     numMalignant = sum(dataset['diagnosis'] == 1)
     print('Broj uzoraka sa benignim oboljenjem: ', numBenign)
     print('Broj uzoraka sa malignim oboljenjem: ', numMalignant)
+
     #prikaz raspodele klasa
     plt.bar(0, numBenign, color ='lightskyblue', width=0.5, label ='Benigna')
     plt.bar(1, numMalignant, color ='mediumaquamarine', width=0.5, label ='Maligna')
@@ -79,7 +88,7 @@ def correlation(dataset):
     titles = ["srednje vrednosti", "srednje-kvadratne greske", "najvece greske"]
     #prikaz korelacija za dijagnozom
     show_correlations(mean, se, worst, titles)
-    # prikaz korelacija sa dijagnozom kolor mapom
+    #prikaz korelacija sa dijagnozom kolor mapom
     show_color_map(dataset, mean, se, worst, titles)
 
     corr = dataset.corr()
@@ -94,11 +103,10 @@ def correlation(dataset):
 
     print(corr[abs(corr['diagnosis']) > 0.5])
     cc = corr[abs(corr['diagnosis']) > 0.5].index
-    print('- Broj prediktora kojima je koeficijent korelacije veci od 0.5 = ', len(cc))
-    print('--------------------------------------------------')
-    print('- Prediktori najkorelisaniji sa izlazom: \n ', cc)
-    print('Svi prediktori sa odgovarajucim koeficijentom korelacije sa izlazom: \n\n', corr['diagnosis'])
-    print('Izdvojeni prediktori sa odgovarajucim koeficijentom korelacije sa izlazom: \n\n', new_corr['diagnosis'])
+    print('\nBroj prediktora kojima je koeficijent korelacije veci od 0.5 = ', len(cc))
+    print('\nAtributi najkorelisaniji sa izlazom: \n ', cc)
+    print('\nSvi prediktori sa odgovarajucim koeficijentom korelacije sa izlazom: \n\n', corr['diagnosis'])
+    print('\nIzdvojeni prediktori sa odgovarajucim koeficijentom korelacije sa izlazom: \n\n', new_corr['diagnosis'])
     #return dataset
 
 def positive_negative_hist(dataset):
@@ -116,7 +124,7 @@ def positive_negative_hist(dataset):
     plt.title("Prikaz pozitivnih i negativnih primeraka za sve atribute", weight="bold")
     plt.show()
 
-def final_atributes(dataset):
+def final_attributes(dataset):
     #odabir konacnih obelezja za koriscenje pri obucavanju i testiranju
     dataset = dataset[['diagnosis', 'radius_mean', 'area_mean',
         'compactness_mean', 'concavity_mean', 'concave points_mean',
@@ -127,15 +135,22 @@ def final_atributes(dataset):
         'fractal_dimension_worst']]
     return dataset
 
-def divide_train_test(dataset):
+def divide_dataset(dataset):
     X = dataset.drop(columns = ['diagnosis'])
     y = dataset['diagnosis']
     X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.8, test_size=0.2)
-    #X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.7, test_size=0.3, stratify=y, shuffle=True, random_state = 0)
     sc = StandardScaler()
     X_train = sc.fit_transform(X_train)
     X_test = sc.transform(X_test)
     return X_train, X_test, y_train, y_test
+
+def train_and_clasify(dataset, X_train, X_test, y_train, y_test):
+    decision_tree(X_train, X_test, y_train, y_test, dataset)
+    logistic_regression(X_train, X_test, y_train, y_test)
+    random_forest(X_train, X_test, y_train, y_test)
+    XGBoost(X_train, X_test, y_train, y_test)
+    AdaBoost(X_train, X_test, y_train, y_test)
+    naive_bayes(X_train, X_test, y_train, y_test)
 
 def plot_confusion_matrix(prediction_lr, y_test, name, filename):
     confusion_matrix = metrics.confusion_matrix(y_test, prediction_lr)
@@ -199,26 +214,17 @@ def naive_bayes(X_train, X_test, y_train, y_test):
     print("Naivni Bajes:\n")
     classifier = GaussianNB()
     classify(classifier, "Naivnog Bajesa", "nb", X_train, X_test, y_train, y_test)
+    print("\n-----------------------\n")
 
 if __name__ == '__main__':
     #analiziranje klasa i atributa
-    dataset = load_data()
-    missing_values(dataset)
-    class_distribution(dataset)
-    correlation(dataset)
-    positive_negative_hist(dataset)
-
+    dataset = analyze_base()
     #izbor atributa
-    dataset = final_atributes(dataset)
-
+    dataset = final_attributes(dataset)
     #podela skupa podataka
-    X_train, X_test, y_train, y_test = divide_train_test(dataset)
-
+    X_train, X_test, y_train, y_test = divide_dataset(dataset)
     #treniranje i klasifikacija razlicitim metodama
-    decision_tree(X_train, X_test, y_train, y_test, dataset)
-    logistic_regression(X_train, X_test, y_train, y_test)
-    random_forest(X_train, X_test, y_train, y_test)
-    XGBoost(X_train, X_test, y_train, y_test)
-    AdaBoost(X_train, X_test, y_train, y_test)
-    naive_bayes(X_train, X_test, y_train, y_test)
+    train_and_clasify(dataset, X_train, X_test, y_train, y_test)
 
+#X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.7, test_size=0.3, stratify=y, shuffle=True, random_state = 0)
+    
