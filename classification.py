@@ -15,17 +15,17 @@ from sklearn.preprocessing import StandardScaler
 def analyze_base():
     dataset = load_data()
     missing_values(dataset)
-    class_distribution(dataset)
+    #class_distribution(dataset)
     correlation(dataset)
-    positive_negative_hist(dataset)
+    #positive_negative_hist(dataset)
     return dataset
 
 #ucitavanje baze
 def load_data():
     dataset = pd.read_csv('data.csv')
-    print('Velicina baze: ', dataset.shape)
     #izbacivanje kolona koje nisu od znacaja (kolona 'id' i kolona 'Unnamed: 32')
     dataset = dataset.drop(columns=['id', 'Unnamed: 32'])
+    print('\nVelicina baze: ', dataset.shape)
     dataset['diagnosis'] = dataset['diagnosis'].replace('B', 0).replace('M', 1)
     print('\n\nPrikaz poslednjih 10 redova baze:\n\n', dataset.tail(10))
     return dataset
@@ -41,7 +41,7 @@ def class_distribution(dataset):
     numBenign = sum(dataset['diagnosis'] == 0)
     numMalignant = sum(dataset['diagnosis'] == 1)
     print('Broj uzoraka sa benignim oboljenjem: ', numBenign)
-    print('Broj uzoraka sa malignim oboljenjem: ', numMalignant)
+    print('Broj uzoraka sa malignim oboljenjem: ', numMalignant, '\n')
 
     #prikaz raspodele klasa
     plt.bar(0, numBenign, color ='lightskyblue', width=0.5, label ='Benigna')
@@ -55,21 +55,21 @@ def class_distribution(dataset):
     plt.savefig('./images/class_distribution.png')
     plt.show()
 
-def show_correlations(mean, se, worst, titles):
+def correlation_with_diagnosis(mean, se, worst, titles):
     data = [mean, se, worst]
     colors = ["lightskyblue", "mediumaquamarine", "peachpuff"]
-    file_names = ["mean_correlation_map.png", "se_correlation_map.png", "worst_correlation_map.png"]
+    file_names = ["mean_corr_class.png", "se_corr_class.png", "worst_corr_class.png"]
     for i in range (len(data)):
         correlation = data[i].drop(columns=['diagnosis']).corrwith(data[i].diagnosis)
-        correlation.plot(kind='bar', grid=False, color=colors[i])
+        correlation.plot(kind='bar', grid=False, color=colors[i], figsize = (20, 20))
         plt.title("Korelacija atributa " + titles[i] + " sa dijagnozom", weight='bold')
         plt.ylabel('Nivo korelisanosti')
         plt.savefig("./images/" + file_names[i])
         plt.show()
 
-def show_color_map(dataset, mean, se, worst, titles):
+def mutual_correlation(dataset, mean, se, worst, titles):
     data = [dataset, mean, se, worst]
-    file_names = ["correlation.png", "mean_correlation.png", "se_correlation.png", "worst_correlation.png"]
+    file_names = ["cm.png", "mean_cm.png", "se_cm.png", "worst_cm.png"]
     titles.insert(0, "svih atributa")
     for i in range (len(data)):
         corr = data[i].corr()
@@ -85,29 +85,18 @@ def correlation(dataset):
     se = dataset.drop(dataset.columns[1:11], axis=1)
     se = se.drop(se.columns[11:], axis=1)
     worst = dataset.drop(dataset.columns[1:21], axis=1)
+
     titles = ["srednje vrednosti", "srednje-kvadratne greske", "najvece greske"]
     #prikaz korelacija za dijagnozom
-    show_correlations(mean, se, worst, titles)
+    #correlation_with_diagnosis(mean, se, worst, titles)
     #prikaz korelacija sa dijagnozom kolor mapom
-    show_color_map(dataset, mean, se, worst, titles)
+    #mutual_correlation(dataset, mean, se, worst, titles)
 
     corr = dataset.corr()
-    dataset = dataset[['diagnosis', 'radius_mean', 'area_mean',
-       'compactness_mean', 'concavity_mean', 'concave points_mean',
-       'perimeter_worst', 'area_worst', 'compactness_worst',
-       'concavity_worst', 'concave points_worst','texture_mean', 
-         'smoothness_mean', 'symmetry_mean','area_se','fractal_dimension_se',
-         'texture_worst', 'smoothness_worst', 'symmetry_worst',
-       'fractal_dimension_worst']]
-    new_corr = dataset.corr()
-
-    print(corr[abs(corr['diagnosis']) > 0.5])
-    cc = corr[abs(corr['diagnosis']) > 0.5].index
-    print('\nBroj prediktora kojima je koeficijent korelacije veci od 0.5 = ', len(cc))
+    print(corr[abs(corr['diagnosis']) > 0.3])
+    cc = corr[abs(corr['diagnosis']) > 0.3].index
+    print('\nBroj prediktora kojima je koeficijent korelacije veci od 0.3 = ', len(cc))
     print('\nAtributi najkorelisaniji sa izlazom: \n ', cc)
-    print('\nSvi prediktori sa odgovarajucim koeficijentom korelacije sa izlazom: \n\n', corr['diagnosis'])
-    print('\nIzdvojeni prediktori sa odgovarajucim koeficijentom korelacije sa izlazom: \n\n', new_corr['diagnosis'])
-    #return dataset
 
 def positive_negative_hist(dataset):
     fig, ax = plt.subplots(ncols = 5, nrows = 6, figsize = (30, 35))
@@ -126,13 +115,13 @@ def positive_negative_hist(dataset):
 
 def final_attributes(dataset):
     #odabir konacnih obelezja za koriscenje pri obucavanju i testiranju
-    dataset = dataset[['diagnosis', 'radius_mean', 'area_mean',
-        'compactness_mean', 'concavity_mean', 'concave points_mean',
-        'perimeter_worst', 'area_worst', 'compactness_worst',
-        'concavity_worst', 'concave points_worst','texture_mean', 
-        'smoothness_mean', 'symmetry_mean','area_se','fractal_dimension_se',
-        'texture_worst', 'smoothness_worst', 'symmetry_worst',
-        'fractal_dimension_worst']]
+    dataset = dataset[['diagnosis', 'radius_mean', 'compactness_mean',
+        'concavity_mean', 'concave points_mean', 'area_worst',
+        'compactness_worst', 'concavity_worst', 'concave points_worst',
+        'texture_mean', 'smoothness_mean', 'symmetry_mean','area_se',
+        'texture_worst', 'smoothness_worst', 'symmetry_worst', 'fractal_dimension_worst']]
+    new_corr = dataset.corr()
+    print('\nIzdvojeni prediktori sa odgovarajucim koeficijentom korelacije sa izlazom: \n\n', new_corr['diagnosis'])
     return dataset
 
 def divide_dataset(dataset):
