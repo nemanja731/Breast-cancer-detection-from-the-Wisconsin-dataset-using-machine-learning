@@ -15,9 +15,9 @@ from sklearn.preprocessing import StandardScaler
 def analyze_base():
     dataset = load_data()
     missing_values(dataset)
-    #class_distribution(dataset)
+    class_distribution(dataset)
     correlation(dataset)
-    #positive_negative_hist(dataset)
+    positive_negative_hist(dataset)
     return dataset
 
 #ucitavanje baze
@@ -88,9 +88,9 @@ def correlation(dataset):
 
     titles = ["srednje vrednosti", "srednje-kvadratne greske", "najvece greske"]
     #prikaz korelacija za dijagnozom
-    #correlation_with_diagnosis(mean, se, worst, titles)
+    correlation_with_diagnosis(mean, se, worst, titles)
     #prikaz korelacija sa dijagnozom kolor mapom
-    #mutual_correlation(dataset, mean, se, worst, titles)
+    mutual_correlation(dataset, mean, se, worst, titles)
 
     corr = dataset.corr()
     print(corr[abs(corr['diagnosis']) > 0.3])
