@@ -6,6 +6,16 @@ The database used in this project is the **Wisconsin Breast Cancer Database** wh
 
 <img src="./images/tumor.png" width="50%" align="center"/>
 
+## Machine learning
+
+The ML techniques used in this project are:
+- Decision tree
+- Random forrest
+- AdaBoost
+- XGBoost
+- Logistic regression
+- Naive Bayes
+
 ## Install requirements
 Firstly, install all basic dependencies:
 ```bash
