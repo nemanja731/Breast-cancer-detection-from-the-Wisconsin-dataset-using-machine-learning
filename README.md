@@ -16,7 +16,7 @@ The ML techniques used in this project are:
 - Logistic regression
 - Naive Bayes
 
-## Install requirements
+## Instructions
 Firstly, install all basic dependencies:
 ```bash
 pip install matplotlib
@@ -35,4 +35,9 @@ pip install xgboost
 ```
 ```bash
 pip install scikit-learn
+```
+
+Then, you can easily run the code by copying the following command into the terminal:
+```bash
+python3 classification.py
 ```
