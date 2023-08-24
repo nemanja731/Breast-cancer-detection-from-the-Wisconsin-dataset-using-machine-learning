@@ -9,12 +9,12 @@ The database used in this project is the **Wisconsin Breast Cancer Database** wh
 ## Machine learning
 
 The ML techniques used in this project are:
-- Decision tree
-- Random forrest
-- AdaBoost
-- XGBoost
-- Logistic regression
-- Naive Bayes
+- [Decision tree](https://scikit-learn.org/stable/modules/tree.html)
+- [Random forrest](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html)
+- [AdaBoost](https://scikit-learn.org/stable/modules/ensemble.html#adaboost)
+- [XGBoost](https://xgboost.readthedocs.io/en/stable/python/python_intro.html)
+- [Logistic regression](https://scikit-learn.org/stable/modules/linear_model.html#logistic-regression)
+- [Naive Bayes](https://scikit-learn.org/stable/modules/naive_bayes.html#naive-bayes)
 
 ## Instructions
 Firstly, install all basic dependencies:
