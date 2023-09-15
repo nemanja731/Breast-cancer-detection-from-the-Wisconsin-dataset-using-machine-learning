@@ -14,7 +14,7 @@ The ML techniques used in this project are:
 
 ## Report
 
-You can see the entire report in the [projekatML.pdf](./projekatML.pdf)
+You can see the entire report in the [projekatML.pdf](./projekatML.pdf).
 The following image shows the content of the report:
 <img src="./images/content.png" width="50%" align="center"/>
 
