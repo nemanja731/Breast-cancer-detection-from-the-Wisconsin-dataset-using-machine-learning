@@ -25,10 +25,10 @@ from sklearn.metrics import (
 # analiza baze
 def analyze_base():
     dataset = load_data()
-    # missing_values(dataset)
-    # class_distribution(dataset)
-    # correlation(dataset)
-    # plot_class_histogram_for_every_attribute(dataset)
+    missing_values(dataset)
+    class_distribution(dataset)
+    correlation(dataset)
+    plot_class_histogram_for_every_attribute(dataset)
     return dataset
 
 
@@ -198,27 +198,27 @@ def choose_attributes(dataset):
     X_old = dataset.drop(columns=["diagnosis"])
     y_old = dataset["diagnosis"]
     k = 15
-    # fisher_score_(X_old, y_old)
-    # information_gain(k, X_old, y_old)
-    # rfe_(k, X_old, y_old)
+    fisher_score_(X_old, y_old)
+    information_gain(k, X_old, y_old)
+    rfe_(k, X_old, y_old)
 
-    # dataset = dataset[
-    #     [
-    #         "diagnosis",
-    #         "area_se",
-    #         "radius_worst",
-    #         "concave points_worst",
-    #         "concavity_mean",
-    #         "symmetry_worst",
-    #         "texture_worst",
-    #     ]
-    # ]
+    dataset = dataset[
+        [
+            "diagnosis",
+            "area_se",
+            "radius_worst",
+            "concave points_worst",
+            "concavity_mean",
+            "symmetry_worst",
+            "texture_worst",
+        ]
+    ]
 
     new_corr = dataset.corr()
-    # print(
-    #     "\nIzdvojeni prediktori sa odgovarajucim koeficijentom korelacije sa izlazom: \n\n",
-    #     new_corr["diagnosis"],
-    # )
+    print(
+        "\nIzdvojeni prediktori sa odgovarajucim koeficijentom korelacije sa izlazom: \n\n",
+        new_corr["diagnosis"],
+    )
     return dataset
 
 
@@ -240,7 +240,7 @@ def train_and_classify(dataset, classifier, name, filename):
         prediction, y_test = train_and_classify_one_model(
             classifier, train_index, test_index, X, y
         )
-        # make_report(classifier, prediction, y_test, name, filename, i)
+        make_report(classifier, prediction, y_test, name, filename, i)
         scores_accuracy.append(accuracy_score(prediction, y_test))
         scores_precision.append(precision_score(prediction, y_test))
         scores_f1_score.append(f1_score(prediction, y_test))
@@ -350,9 +350,7 @@ def plot_confusion_matrix(y_test, prediction, i, name, filename):
     plt.title("Konfuziona matrica - " + name + " " + str(i), weight="bold")
     plt.xlabel("Predikcija")
     plt.ylabel("Stvarna vrednost")
-    plt.show()
-    print('Tacnost modela ' + name + ' iznosi: {:.3f}%'.format(accuracy_score(y_test,prediction)*100))
-    print('Balansirana tacnost modela ' + name + ' iznosi: {:.3f}%'.format(f1_score(y_test,prediction)*100))
+    # plt.show()
 
 
 # prikaz stabla
@@ -375,28 +373,28 @@ def plot_tree(classifier, i):
 def decision_tree(dataset):
     print("\n-----------------------\n")
     print("Stablo odlucivanja:\n")
-    classifier = DecisionTreeClassifier()
+    classifier = DecisionTreeClassifier(max_depth=5, criterion='entropy')
     train_and_classify(dataset, classifier, "Stablo odlucivanja", "dt") 
 
 
 def random_forest(dataset):
     print("\n-----------------------\n")
     print("Slucajne sume:\n")
-    classifier = RandomForestClassifier(n_estimators=50)
+    classifier = RandomForestClassifier(n_estimators=50, max_depth=5, criterion='entropy')
     train_and_classify(dataset, classifier, "Slucajne sume", "rf")
 
 
 def XGBoost(dataset):
     print("\n-----------------------\n")
     print("XGBoost:\n")
-    classifier = XGBClassifier(n_estimators=350, subsample=0.8, max_depth=7, eval_metric = 'logloss')
+    classifier = XGBClassifier(n_estimators=350, max_depth=5)
     train_and_classify(dataset, classifier, "XGBoost", "xgb")
 
 
 def AdaBoost(dataset):
     print("\n-----------------------\n")
     print("AdaBoost:\n")
-    classifier = AdaBoostClassifier(n_estimators=50, learning_rate=1)
+    classifier = AdaBoostClassifier(n_estimators=100, learning_rate=1)
     train_and_classify(dataset, classifier, "AdaBoost", "adb")
 
 
@@ -414,19 +412,9 @@ def naive_bayes(dataset):
     train_and_classify(dataset, classifier, "Naivnog Bajesa", "nb")
     print("\n-----------------------\n")
 
+
 # poziva treniranje i klasifikaciju za svaki model
 def classify(dataset):
-    dataset = dataset[
-        [
-            "diagnosis",
-            "area_se",
-            "radius_worst",
-            "concave points_worst",
-            "concavity_mean",
-            "symmetry_worst",
-            "texture_worst",
-        ]
-    ]
     decision_tree(dataset)
     random_forest(dataset)
     XGBoost(dataset)
@@ -441,88 +429,3 @@ if __name__ == "__main__":
     dataset = choose_attributes(dataset)
     # podela skupa podataka, treniranje i klasifikacija razlicitim modelima
     classify(dataset)
-
-    # dataset = dataset[
-    #     [
-    #         "diagnosis",
-    #         "compactness_mean",
-    #         "area_mean",
-    #         "concavity_mean",
-    #         "fractal_dimension_se",
-    #     ]
-    # ]
-
-    # dataset = dataset[
-    #     [
-    #         "diagnosis",
-    #         "radius_mean",
-    #         "perimeter_mean",
-    #         "area_mean",
-    #         "compactness_mean",
-    #         "concavity_mean",
-    #         "concave points_mean",
-    #         "radius_se",
-    #         "perimeter_se",
-    #         "area_se",
-    #         "radius_worst",
-    #         "perimeter_worst",
-    #         "area_worst",
-    #         "compactness_worst",
-    #         "concavity_worst",
-    #         "concave points_worst",
-    #     ]
-    # ]
-    # dataset = dataset[
-    #     [
-    #         "diagnosis",
-    #         "perimeter_mean",
-    #         "radius_mean",
-    #         "compactness_mean",
-    #         "concave points_mean",  # 1
-    #         "radius_se",
-    #         "perimeter_se",
-    #         "radius_worst",  # 2
-    #         "perimeter_worst",  # 3
-    #         "compactness_worst",
-    #         "concave points_worst",  # 5
-    #         "compactness_se",
-    #         "concave points_se",
-    #         "texture_worst",
-    #         "area_worst",  # 4
-    #     ]
-    # ]
-
-    # dataset = dataset[["diagnosis", "concavity_mean", "concavity_se", "area_mean"]]
-
-    # dataset = dataset[
-    #     [
-    #         "diagnosis",
-    #         "radius_mean",
-    #         "compactness_mean",
-    #         "concavity_mean",
-    #         "concave points_mean",
-    #         "area_worst",
-    #         "compactness_worst",
-    #         "concavity_worst",
-    #         "concave points_worst",
-    #         "texture_mean",
-    #         "smoothness_mean",
-    #         "symmetry_mean",
-    #         "area_se",
-    #         "texture_worst",
-    #         "smoothness_worst",
-    #         "symmetry_worst",
-    #         "fractal_dimension_worst",
-    #     ]
-    # ]
-
-    # dataset = dataset[
-    #     [
-    #         "diagnosis",
-    #         "radius_mean",
-    #         "perimeter_mean",
-    #         "area_mean",
-    #         "compactness_mean",
-    #         "concave points_mean",
-    #     ]
-    # ]
